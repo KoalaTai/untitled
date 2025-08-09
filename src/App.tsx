@@ -287,17 +287,29 @@ function App() {
     const section = ASSESSMENT_SECTIONS[sectionId]
     if (!section || !assessmentAnswers) return 0
     
-    const answers = section.questions.map(q => assessmentAnswers[q.id] || 0)
-    const total = answers.reduce((sum, score) => sum + score, 0)
-    const maxPossible = section.questions.length * 4
-    return Math.round((total / maxPossible) * 100)
+    try {
+      const answers = section.questions.map(q => assessmentAnswers[q.id] || 0)
+      const total = answers.reduce((sum, score) => sum + score, 0)
+      const maxPossible = section.questions.length * 4
+      return Math.round((total / maxPossible) * 100)
+    } catch (error) {
+      console.error('Error calculating section score:', error)
+      return 0
+    }
   }
 
   const calculateOverallScore = () => {
     if (!assessmentAnswers) return 0
     
-    const sectionScores = Object.keys(ASSESSMENT_SECTIONS).map(calculateSectionScore)
-    return Math.round(sectionScores.reduce((sum, score) => sum + score, 0) / sectionScores.length)
+    try {
+      const sectionScores = Object.keys(ASSESSMENT_SECTIONS).map(calculateSectionScore)
+      const validScores = sectionScores.filter(score => !isNaN(score))
+      if (validScores.length === 0) return 0
+      return Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length)
+    } catch (error) {
+      console.error('Error calculating overall score:', error)
+      return 0
+    }
   }
 
   const getReadinessLevel = (score) => {
@@ -324,7 +336,7 @@ function App() {
 
   // Validate if organization setup is complete
   const isOrganizationComplete = () => {
-    return organizationInfo?.name && organizationInfo?.size && organizationInfo?.hourlyRate
+    return organizationInfo?.name?.trim() && organizationInfo?.size?.trim() && organizationInfo?.hourlyRate && organizationInfo.hourlyRate > 0
   }
 
   // Check if assessment has meaningful progress
@@ -332,7 +344,7 @@ function App() {
     if (!assessmentAnswers) return { completed: 0, total: 0, percentage: 0 }
     
     const totalQuestions = Object.values(ASSESSMENT_SECTIONS).reduce((sum, section) => sum + section.questions.length, 0)
-    const answeredQuestions = Object.keys(assessmentAnswers).length
+    const answeredQuestions = Object.keys(assessmentAnswers).filter(key => assessmentAnswers[key] > 0).length
     
     return {
       completed: answeredQuestions,
@@ -342,12 +354,13 @@ function App() {
   }
 
   const calculateROI = () => {
-    if (!organizationInfo) return []
+    if (!organizationInfo?.hourlyRate) return []
     
-    const { hourlyRate = 150 } = organizationInfo
+    const { hourlyRate } = organizationInfo
     return ROI_USE_CASES.map(useCase => {
       const timeSaved = (useCase.baselineHours * useCase.improvementPercent / 100)
-      const annualValue = timeSaved * hourlyRate * 52 // Assuming weekly occurrence
+      const annualInstances = useCase.id === 'complaint_analysis' ? 12 : 26 // Monthly vs bi-weekly
+      const annualValue = timeSaved * hourlyRate * annualInstances
       return {
         ...useCase,
         timeSaved,
@@ -730,7 +743,7 @@ function App() {
                   >
                     Continue to Assessment
                   </Button>
-                  {(organizationInfo?.name || assessmentAnswers && Object.keys(assessmentAnswers).length > 0) && (
+                  {(organizationInfo?.name || (assessmentAnswers && Object.keys(assessmentAnswers).filter(key => assessmentAnswers[key] > 0).length > 0)) && (
                     <Button onClick={resetAssessment} variant="outline" className="text-destructive">
                       Reset All Data
                     </Button>
@@ -968,7 +981,7 @@ function App() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <div className="text-3xl font-bold text-green-600 mb-2">
-                          ${calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0).toLocaleString()}
+                          ${(calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0) || 0).toLocaleString()}
                         </div>
                         <p className="text-lg font-medium">Total Estimated Annual Value</p>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -1007,7 +1020,7 @@ function App() {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">
-                        ${calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0).toLocaleString()}
+                        ${(calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0) || 0).toLocaleString()}
                       </div>
                       <p className="text-sm text-muted-foreground">Annual ROI</p>
                     </div>
