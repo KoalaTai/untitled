@@ -313,6 +313,15 @@ function App() {
     return likelihood * impact
   }
 
+  // Get risk level based on score
+  const getRiskLevel = (score) => {
+    if (score >= 20) return { level: 'Critical', color: 'bg-red-100 text-red-800 border-red-200' }
+    if (score >= 15) return { level: 'High', color: 'bg-orange-100 text-orange-800 border-orange-200' }
+    if (score >= 10) return { level: 'Medium', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
+    if (score >= 5) return { level: 'Low', color: 'bg-green-100 text-green-800 border-green-200' }
+    return { level: 'Minimal', color: 'bg-gray-100 text-gray-800 border-gray-200' }
+  }
+
   // Validate if organization setup is complete
   const isOrganizationComplete = () => {
     return organizationInfo?.name && organizationInfo?.size && organizationInfo?.hourlyRate
