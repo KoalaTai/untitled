@@ -25,11 +25,14 @@ import {
   ChartLine,
   FileText,
   Download,
-  WarningCircle
+  WarningCircle,
+  BookOpen,
+  Scale,
+  Microscope
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
-// Assessment question types and data structures
+// Assessment question types and data structures - Enhanced with comprehensive GxP requirements
 const ASSESSMENT_SECTIONS = {
   dataGovernance: {
     title: 'Data Governance & Security',
@@ -39,7 +42,7 @@ const ASSESSMENT_SECTIONS = {
         id: 'data_classification',
         question: 'Does your organization have a comprehensive data classification system with sensitivity labels?',
         options: [
-          { value: 4, label: 'Fully implemented with GxP-specific labels' },
+          { value: 4, label: 'Fully implemented with GxP-specific labels and inheritance' },
           { value: 3, label: 'Basic system in place, needs GxP enhancement' },
           { value: 2, label: 'Limited classification system' },
           { value: 1, label: 'No formal data classification' }
@@ -49,7 +52,7 @@ const ASSESSMENT_SECTIONS = {
         id: 'access_controls',
         question: 'How mature are your Identity and Access Management (IAM) controls?',
         options: [
-          { value: 4, label: 'Role-based access with regular audits and clean permissions' },
+          { value: 4, label: 'Zero-trust model with regular audits and clean permissions' },
           { value: 3, label: 'Role-based access with some permission sprawl' },
           { value: 2, label: 'Basic access controls with known gaps' },
           { value: 1, label: 'Minimal access controls, significant oversharing risks' }
@@ -59,7 +62,7 @@ const ASSESSMENT_SECTIONS = {
         id: 'dlp_policies',
         question: 'What is the current state of your Data Loss Prevention (DLP) policies?',
         options: [
-          { value: 4, label: 'Comprehensive DLP with AI-specific policies' },
+          { value: 4, label: 'Comprehensive DLP with AI-specific and Browser DLP policies' },
           { value: 3, label: 'Basic DLP policies in place' },
           { value: 2, label: 'Limited DLP implementation' },
           { value: 1, label: 'No DLP policies implemented' }
@@ -74,6 +77,26 @@ const ASSESSMENT_SECTIONS = {
           { value: 2, label: 'Basic audit logging' },
           { value: 1, label: 'Limited audit capabilities' }
         ]
+      },
+      {
+        id: 'data_residency',
+        question: 'How well do you understand and control data residency requirements?',
+        options: [
+          { value: 4, label: 'Full control with verified M365 data residency configuration' },
+          { value: 3, label: 'Good understanding with some gaps in verification' },
+          { value: 2, label: 'Basic understanding of data residency' },
+          { value: 1, label: 'Limited knowledge of data location requirements' }
+        ]
+      },
+      {
+        id: 'purview_deployment',
+        question: 'What is your Microsoft Purview deployment status?',
+        options: [
+          { value: 4, label: 'Comprehensive Purview deployment with unified data governance' },
+          { value: 3, label: 'Partial Purview deployment with basic governance' },
+          { value: 2, label: 'Limited Purview usage' },
+          { value: 1, label: 'No Purview deployment' }
+        ]
       }
     ]
   },
@@ -85,7 +108,7 @@ const ASSESSMENT_SECTIONS = {
         id: 'validation_approach',
         question: 'What is your current approach to system validation?',
         options: [
-          { value: 4, label: 'Experienced with Computer Software Assurance (CSA)' },
+          { value: 4, label: 'Experienced with Computer Software Assurance (CSA) methodology' },
           { value: 3, label: 'Traditional CSV with some risk-based elements' },
           { value: 2, label: 'Primarily traditional CSV approach' },
           { value: 1, label: 'Limited validation experience' }
@@ -110,6 +133,26 @@ const ASSESSMENT_SECTIONS = {
           { value: 2, label: 'Basic QMS processes in place' },
           { value: 1, label: 'Developing QMS processes' }
         ]
+      },
+      {
+        id: 'alcoa_compliance',
+        question: 'How well does your organization implement ALCOA+ principles?',
+        options: [
+          { value: 4, label: 'Comprehensive ALCOA+ implementation with data integrity controls' },
+          { value: 3, label: 'Good understanding with some implementation gaps' },
+          { value: 2, label: 'Basic ALCOA+ knowledge and implementation' },
+          { value: 1, label: 'Limited understanding of ALCOA+ requirements' }
+        ]
+      },
+      {
+        id: 'regulatory_submissions',
+        question: 'What is your experience with regulatory submissions and documentation?',
+        options: [
+          { value: 4, label: 'Extensive experience with global regulatory requirements' },
+          { value: 3, label: 'Good experience with primary markets (FDA, EMA)' },
+          { value: 2, label: 'Limited regulatory submission experience' },
+          { value: 1, label: 'Minimal regulatory documentation experience' }
+        ]
       }
     ]
   },
@@ -121,17 +164,27 @@ const ASSESSMENT_SECTIONS = {
         id: 'microsoft_365',
         question: 'What is your current Microsoft 365 deployment status?',
         options: [
-          { value: 4, label: 'Enterprise-wide deployment with Purview governance' },
+          { value: 4, label: 'Enterprise E3/E5 with Purview governance and single-tenant isolation' },
           { value: 3, label: 'Widespread deployment, limited governance' },
           { value: 2, label: 'Partial deployment across organization' },
           { value: 1, label: 'Limited or no Microsoft 365 deployment' }
         ]
       },
       {
+        id: 'azure_integration',
+        question: 'How mature is your Azure cloud integration and security posture?',
+        options: [
+          { value: 4, label: 'Azure OpenAI Service ready with enterprise security controls' },
+          { value: 3, label: 'Good Azure integration with basic security' },
+          { value: 2, label: 'Limited Azure services usage' },
+          { value: 1, label: 'Minimal Azure cloud presence' }
+        ]
+      },
+      {
         id: 'cloud_maturity',
         question: 'How mature is your cloud adoption and governance?',
         options: [
-          { value: 4, label: 'Cloud-first with comprehensive governance' },
+          { value: 4, label: 'Cloud-first with comprehensive governance and compliance frameworks' },
           { value: 3, label: 'Significant cloud adoption with basic governance' },
           { value: 2, label: 'Mixed on-premise and cloud environment' },
           { value: 1, label: 'Primarily on-premise with limited cloud' }
@@ -145,6 +198,16 @@ const ASSESSMENT_SECTIONS = {
           { value: 3, label: 'Strong security practices with room for improvement' },
           { value: 2, label: 'Basic security practices in place' },
           { value: 1, label: 'Limited security practices' }
+        ]
+      },
+      {
+        id: 'network_architecture',
+        question: 'How is your network architecture configured for cloud AI services?',
+        options: [
+          { value: 4, label: 'Microsoft backbone network integration with traffic isolation' },
+          { value: 3, label: 'Good network security with some cloud optimization' },
+          { value: 2, label: 'Basic network security controls' },
+          { value: 1, label: 'Legacy network architecture' }
         ]
       }
     ]
@@ -167,7 +230,7 @@ const ASSESSMENT_SECTIONS = {
         id: 'ai_awareness',
         question: 'What is the current level of AI awareness and acceptance?',
         options: [
-          { value: 4, label: 'High AI literacy with enthusiastic leadership support' },
+          { value: 4, label: 'High AI literacy with enthusiastic C-suite support and AI Council' },
           { value: 3, label: 'Growing AI awareness with leadership buy-in' },
           { value: 2, label: 'Basic AI awareness, mixed leadership support' },
           { value: 1, label: 'Limited AI awareness and understanding' }
@@ -177,77 +240,253 @@ const ASSESSMENT_SECTIONS = {
         id: 'training_capacity',
         question: 'How strong are your training and development capabilities?',
         options: [
-          { value: 4, label: 'Comprehensive training programs with digital delivery' },
+          { value: 4, label: 'Comprehensive training programs with digital delivery and competency tracking' },
           { value: 3, label: 'Good training capabilities' },
           { value: 2, label: 'Basic training programs' },
           { value: 1, label: 'Limited training capabilities' }
+        ]
+      },
+      {
+        id: 'ai_governance',
+        question: 'What AI governance structure do you have in place?',
+        options: [
+          { value: 4, label: 'Established AI Council with cross-functional representation' },
+          { value: 3, label: 'Basic AI oversight committee' },
+          { value: 2, label: 'Ad-hoc AI governance discussions' },
+          { value: 1, label: 'No formal AI governance structure' }
+        ]
+      },
+      {
+        id: 'prompt_engineering',
+        question: 'What is your organization\'s experience with prompt engineering and AI interaction?',
+        options: [
+          { value: 4, label: 'Formal prompt engineering SOPs with validated GxP workflows' },
+          { value: 3, label: 'Some experience with AI tools and prompting best practices' },
+          { value: 2, label: 'Limited experience with AI interaction' },
+          { value: 1, label: 'No experience with prompt engineering or AI interaction' }
         ]
       }
     ]
   }
 }
 
-// Risk assessment data
+// Risk assessment data - Enhanced with comprehensive AI-specific risks for GxP environments
 const RISK_FACTORS = [
   {
     id: 'hallucination',
     name: 'AI Hallucination',
-    description: 'Model generates factually incorrect information',
-    impact: ['Patient Safety', 'Regulatory Submissions'],
-    mitigation: 'Human-in-the-Loop verification, grounded prompts'
+    description: 'Model generates factually incorrect, fabricated, or nonsensical information presented as factual',
+    impact: ['Patient Safety', 'Regulatory Submissions', 'Product Quality'],
+    mitigation: 'Human-in-the-Loop (HITL) verification, grounded prompts with specific source documents, Retrieval-Augmented Generation (RAG)',
+    severity: 'Critical',
+    gxpRelevance: 'Direct impact on regulatory compliance and safety decisions'
   },
   {
     id: 'data_leakage',
-    name: 'Information Leakage',
-    description: 'Sensitive data shared inappropriately',
-    impact: ['Data Privacy', 'Competitive Advantage'],
-    mitigation: 'DLP policies, sensitivity labels, access controls'
+    name: 'Information Leakage / Oversharing',
+    description: 'AI inadvertently includes sensitive or confidential information in responses shared with unauthorized audiences',
+    impact: ['Data Privacy', 'Competitive Advantage', 'Regulatory Violations', 'IP Theft'],
+    mitigation: 'Microsoft Purview DLP policies, sensitivity labels with inheritance, Browser DLP, access controls',
+    severity: 'High',
+    gxpRelevance: 'GDPR, HIPAA, and trade secret violations'
   },
   {
     id: 'bias',
-    name: 'Data Bias',
-    description: 'AI produces discriminatory or skewed outputs',
-    impact: ['Product Quality', 'Regulatory Compliance'],
-    mitigation: 'Diverse training data, bias detection tools'
+    name: 'Data Bias & Discrimination',
+    description: 'AI produces skewed, discriminatory, or non-representative outputs due to biased training data',
+    impact: ['Product Quality', 'Regulatory Compliance', 'Scientific Integrity'],
+    mitigation: 'Diverse data sources, bias detection tools, representative organizational data curation',
+    severity: 'Medium',
+    gxpRelevance: 'Can affect clinical trial integrity and regulatory analysis'
   },
   {
     id: 'non_determinism',
-    name: 'Inconsistent Output',
-    description: 'Different responses to similar prompts',
-    impact: ['Process Repeatability', 'GxP Compliance'],
-    mitigation: 'Standardized prompts, validation testing'
+    name: 'Inconsistent Output / Non-Determinism',
+    description: 'AI provides different responses to identical or similar prompts across different sessions',
+    impact: ['Process Repeatability', 'GxP Compliance', 'Audit Trail Integrity'],
+    mitigation: 'Standardized prompt libraries, validation testing, version control of AI interactions',
+    severity: 'High',
+    gxpRelevance: 'Violates GxP requirements for consistent, repeatable processes'
+  },
+  {
+    id: 'prompt_injection',
+    name: 'Prompt Injection & Manipulation',
+    description: 'Malicious users craft prompts to bypass safety controls or extract unauthorized information',
+    impact: ['Data Security', 'System Integrity', 'Unauthorized Access'],
+    mitigation: 'Input validation, prompt sanitization, role-based access controls, monitoring',
+    severity: 'Medium',
+    gxpRelevance: 'Can compromise data integrity and audit trail authenticity'
+  },
+  {
+    id: 'regulatory_drift',
+    name: 'Regulatory Knowledge Drift',
+    description: 'AI responses become outdated as regulations change, leading to non-compliant advice',
+    impact: ['Regulatory Compliance', 'Audit Findings', 'Submission Quality'],
+    mitigation: 'Regular model updates, current regulatory database integration, expert review cycles',
+    severity: 'High',
+    gxpRelevance: 'Critical for maintaining current regulatory compliance'
+  },
+  {
+    id: 'validation_gaps',
+    name: 'Inadequate Validation for AI Systems',
+    description: 'Traditional CSV approaches fail to adequately validate non-deterministic AI systems',
+    impact: ['Regulatory Acceptance', 'System Reliability', 'Compliance Gaps'],
+    mitigation: 'Computer Software Assurance (CSA) methodology, risk-based validation approach',
+    severity: 'Critical',
+    gxpRelevance: 'Essential for FDA and regulatory body acceptance of AI-enabled processes'
+  },
+  {
+    id: 'audit_complexity',
+    name: 'Complex Audit Trail Requirements',
+    description: 'AI interactions create complex audit requirements spanning prompts, responses, and source data',
+    impact: ['21 CFR Part 11 Compliance', 'Audit Readiness', 'Investigation Capability'],
+    mitigation: 'Comprehensive logging via Purview, eDiscovery readiness, structured audit procedures',
+    severity: 'Medium',
+    gxpRelevance: 'Required for maintaining electronic records compliance'
   }
 ]
 
-// ROI calculation use cases
+// 21 CFR Part 11 Compliance Mapping for Microsoft Copilot Enterprise
+const CFR_PART_11_MAPPING = [
+  {
+    clause: '§11.10(a)',
+    requirement: 'Validation of systems to ensure accuracy, reliability, and consistent intended performance',
+    copilotControl: 'Computer Software Assurance (CSA) framework applied to specific GxP intended uses',
+    implementationNotes: 'Validation is not of the entire Copilot platform, but of each specific GxP process that utilizes it',
+    customerResponsibility: 'Complete',
+    microsoftResponsibility: 'Infrastructure'
+  },
+  {
+    clause: '§11.10(b)',
+    requirement: 'Ability to generate accurate and complete copies of records in human-readable and electronic form',
+    copilotControl: 'Microsoft Purview eDiscovery can search for and export complete prompt/response interactions',
+    implementationNotes: 'eDiscovery permissions must be tightly controlled with formal procedures for export and review',
+    customerResponsibility: 'Complete',
+    microsoftResponsibility: 'Platform capability'
+  },
+  {
+    clause: '§11.10(c)',
+    requirement: 'Protection of records to enable accurate retrieval throughout retention period',
+    copilotControl: 'Microsoft Purview Data Lifecycle Management with retention policies applied to user mailboxes',
+    implementationNotes: 'Retention policies must be configured to meet GxP requirements (product lifecycle + 1 year)',
+    customerResponsibility: 'Configuration',
+    microsoftResponsibility: 'Platform capability'
+  },
+  {
+    clause: '§11.10(d)',
+    requirement: 'Limiting system access to authorized individuals',
+    copilotControl: 'Microsoft Entra ID and RBAC. Copilot operates within user\'s existing security context',
+    implementationNotes: 'Access controls must be properly configured and regularly audited. Data hygiene is prerequisite',
+    customerResponsibility: 'Complete',
+    microsoftResponsibility: 'Platform controls'
+  },
+  {
+    clause: '§11.10(e)',
+    requirement: 'Use of secure, computer-generated, time-stamped audit trails',
+    copilotControl: 'Microsoft Purview Unified Audit Log captures all interactions with user ID, timestamp, and activity',
+    implementationNotes: 'Audit logs configured for appropriate retention (up to 10 years with premium licensing)',
+    customerResponsibility: 'Configuration',
+    microsoftResponsibility: 'Platform capability'
+  },
+  {
+    clause: '§11.10(k)(1)',
+    requirement: 'Operational system checks to enforce permitted sequencing of steps and events',
+    copilotControl: 'Custom agents with Copilot Studio can enforce specific workflows. DLP policies check outputs',
+    implementationNotes: 'Standard Copilot does not enforce procedural steps. GxP workflows require human-in-the-loop verification',
+    customerResponsibility: 'Workflow design',
+    microsoftResponsibility: 'Limited'
+  },
+  {
+    clause: '§11.50(a)',
+    requirement: 'Electronic records contain printed name, date/time, and meaning of signature',
+    copilotControl: 'Integration with electronic signature solutions (e.g., Adobe Acrobat Sign)',
+    implementationNotes: 'Copilot does not provide compliant e-signature function. Can draft documents for signature routing',
+    customerResponsibility: 'Integration',
+    microsoftResponsibility: 'None'
+  }
+]
+
+// ROI calculation use cases - Enhanced with comprehensive GxP scenarios
 const ROI_USE_CASES = [
   {
     id: 'deviation_investigation',
-    name: 'Deviation Investigation',
-    description: 'AI-assisted analysis and summarization',
+    name: 'Deviation Investigation & CAPA',
+    description: 'AI-assisted root cause analysis and CAPA plan development',
     baselineHours: 25,
-    improvementPercent: 30
+    improvementPercent: 35,
+    frequency: 'bi-weekly',
+    riskLevel: 'medium',
+    validationEffort: 'moderate'
   },
   {
     id: 'regulatory_submission',
     name: 'Regulatory Submission Drafting',
-    description: 'Initial drafts of technical documentation',
+    description: 'Technical documentation and 510(k) module generation',
     baselineHours: 80,
-    improvementPercent: 40
+    improvementPercent: 45,
+    frequency: 'monthly',
+    riskLevel: 'high',
+    validationEffort: 'extensive'
   },
   {
     id: 'audit_preparation',
     name: 'Internal Audit Preparation',
-    description: 'Automated compliance checks and summaries',
+    description: 'Automated compliance checks and audit response preparation',
     baselineHours: 120,
-    improvementPercent: 50
+    improvementPercent: 55,
+    frequency: 'quarterly',
+    riskLevel: 'low',
+    validationEffort: 'minimal'
   },
   {
     id: 'complaint_analysis',
-    name: 'Complaint Data Analysis',
-    description: 'Pattern identification and trend analysis',
+    name: 'Complaint Data Analysis & Trending',
+    description: 'Pattern identification and post-market surveillance support',
     baselineHours: 16,
-    improvementPercent: 60
+    improvementPercent: 65,
+    frequency: 'monthly',
+    riskLevel: 'medium',
+    validationEffort: 'moderate'
+  },
+  {
+    id: 'sop_review',
+    name: 'SOP Review & Gap Analysis',
+    description: 'Regulatory alignment checks and document review',
+    baselineHours: 40,
+    improvementPercent: 50,
+    frequency: 'monthly',
+    riskLevel: 'low',
+    validationEffort: 'minimal'
+  },
+  {
+    id: 'risk_assessment',
+    name: 'Risk Assessment Documentation',
+    description: 'Risk management file development and updates',
+    baselineHours: 60,
+    improvementPercent: 40,
+    frequency: 'quarterly',
+    riskLevel: 'high',
+    validationEffort: 'extensive'
+  },
+  {
+    id: 'training_material',
+    name: 'Training Material Development',
+    description: 'GxP training content creation and updates',
+    baselineHours: 32,
+    improvementPercent: 60,
+    frequency: 'monthly',
+    riskLevel: 'low',
+    validationEffort: 'minimal'
+  },
+  {
+    id: 'batch_record_review',
+    name: 'Batch Record Review & Analysis',
+    description: 'Manufacturing data analysis and trend identification',
+    baselineHours: 12,
+    improvementPercent: 45,
+    frequency: 'weekly',
+    riskLevel: 'medium',
+    validationEffort: 'moderate'
   }
 ]
 
@@ -359,12 +598,37 @@ function App() {
     const { hourlyRate } = organizationInfo
     return ROI_USE_CASES.map(useCase => {
       const timeSaved = (useCase.baselineHours * useCase.improvementPercent / 100)
-      const annualInstances = useCase.id === 'complaint_analysis' ? 12 : 26 // Monthly vs bi-weekly
+      
+      // Calculate annual instances based on frequency
+      let annualInstances = 0
+      switch(useCase.frequency) {
+        case 'weekly': annualInstances = 52; break
+        case 'bi-weekly': annualInstances = 26; break
+        case 'monthly': annualInstances = 12; break
+        case 'quarterly': annualInstances = 4; break
+        default: annualInstances = 12
+      }
+      
       const annualValue = timeSaved * hourlyRate * annualInstances
+      
+      // Calculate implementation cost based on validation effort
+      let implementationCost = 0
+      switch(useCase.validationEffort) {
+        case 'minimal': implementationCost = hourlyRate * 40; break
+        case 'moderate': implementationCost = hourlyRate * 120; break
+        case 'extensive': implementationCost = hourlyRate * 300; break
+        default: implementationCost = hourlyRate * 80
+      }
+      
+      const netAnnualValue = annualValue - (implementationCost * 0.2) // Amortize over 5 years
+      
       return {
         ...useCase,
         timeSaved,
-        annualValue
+        annualValue,
+        implementationCost,
+        netAnnualValue,
+        roi: implementationCost > 0 ? (netAnnualValue / implementationCost * 100) : 0
       }
     })
   }
@@ -647,7 +911,7 @@ function App() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Users size={16} />
               Setup
@@ -666,6 +930,10 @@ function App() {
               <AlertTriangle size={16} />
               Risk Analysis
               {Object.keys(riskAssessment || {}).length > 0 && <CheckCircle size={12} className="text-green-600" />}
+            </TabsTrigger>
+            <TabsTrigger value="compliance" className="flex items-center gap-2">
+              <Scale size={16} />
+              Compliance
             </TabsTrigger>
             <TabsTrigger value="roi" className="flex items-center gap-2">
               <TrendUp size={16} />
@@ -927,6 +1195,155 @@ function App() {
               </div>
             </div>
             <div className="mt-6">
+              <Button onClick={() => setCurrentTab('compliance')} className="w-full">
+                Continue to Compliance Framework
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* Compliance Framework Tab */}
+          <TabsContent value="compliance">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Scale size={20} />
+                    21 CFR Part 11 Compliance Framework
+                  </CardTitle>
+                  <CardDescription>
+                    Detailed mapping of regulatory requirements to Microsoft Copilot Enterprise controls
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Alert className="mb-6">
+                    <BookOpen size={16} />
+                    <AlertDescription>
+                      This framework shows how Microsoft Copilot Enterprise capabilities map to 21 CFR Part 11 requirements. 
+                      <strong> Customer implementation and configuration is critical for achieving compliance.</strong>
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div className="space-y-4">
+                    {CFR_PART_11_MAPPING.map((item, index) => (
+                      <Card key={index} className="border-l-4 border-l-primary">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-lg font-semibold">{item.clause}</CardTitle>
+                              <CardDescription className="text-sm mt-1">
+                                {item.requirement}
+                              </CardDescription>
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge 
+                                variant={item.customerResponsibility === 'Complete' ? 'destructive' : 
+                                        item.customerResponsibility === 'Configuration' ? 'default' : 'secondary'}
+                              >
+                                Customer: {item.customerResponsibility}
+                              </Badge>
+                              <Badge variant="outline">
+                                Microsoft: {item.microsoftResponsibility}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div>
+                            <h4 className="font-medium text-sm text-primary mb-2">Copilot Control Mechanism</h4>
+                            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
+                              {item.copilotControl}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-sm text-orange-600 mb-2">Implementation Requirements</h4>
+                            <p className="text-sm">
+                              {item.implementationNotes}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Alert className="mt-6">
+                    <AlertTriangle size={16} />
+                    <AlertDescription>
+                      <strong>Critical Success Factor:</strong> The shared responsibility model means Microsoft provides the platform capabilities, 
+                      but customers must properly configure, validate, and maintain their implementation to achieve GxP compliance.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Microscope size={20} />
+                    ALCOA+ Principles Implementation
+                  </CardTitle>
+                  <CardDescription>
+                    How Copilot Enterprise addresses data integrity requirements
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-green-600">✓ Attributable</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">Microsoft Purview audit log attributes every interaction to authenticated user with precise timestamp</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-green-600">✓ Legible & Enduring</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">Prompt/response data stored in human-readable format with long-term retention capability</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-green-600">✓ Contemporaneous</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">Audit logs capture interactions in real-time as they occur</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-green-600">✓ Original</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">Initial interactions preserved in mailboxes, retrievable via eDiscovery</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 border-orange-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-orange-600">⚠ Accurate</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm"><strong>Requires Human-in-the-Loop verification.</strong> AI non-determinism means accuracy cannot be assumed.</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base text-green-600">✓ Complete & Available</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">Full interaction history maintained and available through organizational data governance</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Button onClick={() => setCurrentTab('roi')} className="w-full">
                 Continue to ROI Calculator
               </Button>
@@ -947,12 +1364,31 @@ function App() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {calculateROI().map(useCase => (
                       <Card key={useCase.id} className="border-2">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-lg">{useCase.name}</CardTitle>
-                          <CardDescription>{useCase.description}</CardDescription>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{useCase.name}</CardTitle>
+                              <CardDescription>{useCase.description}</CardDescription>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <Badge 
+                                className={
+                                  useCase.riskLevel === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  useCase.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  'bg-green-100 text-green-800 border-green-200'
+                                }
+                                variant="secondary"
+                              >
+                                {useCase.riskLevel} risk
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {useCase.frequency}
+                              </Badge>
+                            </div>
+                          </div>
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <div className="flex justify-between">
@@ -965,31 +1401,54 @@ function App() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Time Saved:</span>
-                            <span className="font-medium">{useCase.timeSaved.toFixed(1)}h</span>
+                            <span className="font-medium">{useCase.timeSaved?.toFixed(1) || 0}h</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Implementation:</span>
+                            <span className="font-medium">${useCase.implementationCost?.toLocaleString() || 0}</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between text-lg font-semibold">
-                            <span>Annual Value:</span>
-                            <span className="text-green-600">${useCase.annualValue.toLocaleString()}</span>
+                            <span>Net Annual Value:</span>
+                            <span className="text-green-600">${useCase.netAnnualValue?.toLocaleString() || 0}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">ROI:</span>
+                            <span className="font-medium text-blue-600">{useCase.roi?.toFixed(0) || 0}%</span>
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                   
-                  <Card className="mt-6 bg-gradient-to-r from-green-50 to-blue-50">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600 mb-2">
-                          ${(calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0) || 0).toLocaleString()}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-green-600 mb-2">
+                            ${(calculateROI().reduce((sum, useCase) => sum + (useCase.netAnnualValue || 0), 0) || 0).toLocaleString()}
+                          </div>
+                          <p className="text-lg font-medium">Total Net Annual Value</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            After implementation costs
+                          </p>
                         </div>
-                        <p className="text-lg font-medium">Total Estimated Annual Value</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Based on {organizationInfo?.hourlyRate ? `$${organizationInfo.hourlyRate}` : '$150'}/hour fully-burdened rate
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-r from-purple-50 to-pink-50">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-purple-600 mb-2">
+                            ${(calculateROI().reduce((sum, useCase) => sum + (useCase.implementationCost || 0), 0) || 0).toLocaleString()}
+                          </div>
+                          <p className="text-lg font-medium">Total Implementation Investment</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Validation and setup costs
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1020,9 +1479,9 @@ function App() {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">
-                        ${(calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0) || 0).toLocaleString()}
+                        ${(calculateROI().reduce((sum, useCase) => sum + (useCase.netAnnualValue || 0), 0) || 0).toLocaleString()}
                       </div>
-                      <p className="text-sm text-muted-foreground">Annual ROI</p>
+                      <p className="text-sm text-muted-foreground">Net Annual ROI</p>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-600">
