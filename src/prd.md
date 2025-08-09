@@ -1,86 +1,126 @@
-# AI Copilot Implementation Assessment Tool - PRD
+# AI Copilot Implementation Assessment Tool - Product Requirements Document
 
 ## Core Purpose & Success
-- **Mission Statement**: Provide a comprehensive assessment and planning tool for life sciences organizations implementing Microsoft Copilot in GxP-regulated environments.
-- **Success Indicators**: Organizations can confidently assess their readiness, identify risks, and create actionable implementation roadmaps while maintaining regulatory compliance.
-- **Experience Qualities**: Professional, systematic, and trustworthy - mirroring the serious nature of regulatory compliance in life sciences.
+
+**Mission Statement**: Enable life sciences organizations to systematically evaluate their readiness for Microsoft Copilot Enterprise implementation in GxP-regulated environments through a comprehensive, interactive assessment framework.
+
+**Success Indicators**: 
+- Organizations can identify specific readiness gaps across technical, regulatory, and organizational domains
+- Stakeholders receive actionable insights and roadmaps for successful AI implementation
+- Risk assessment provides clear mitigation strategies for GxP compliance
+- ROI calculations demonstrate quantifiable business value
+
+**Experience Qualities**: Professional, comprehensive, trustworthy
 
 ## Project Classification & Approach
-- **Complexity Level**: Complex Application - advanced functionality with multi-step workflows, data persistence, and comprehensive assessment logic
-- **Primary User Activity**: Interacting and Creating - users actively assess their organization and generate strategic plans
 
-## Thought Process for Feature Selection
-- **Core Problem Analysis**: Life sciences organizations need structured guidance to navigate the complex intersection of AI adoption and regulatory compliance
-- **User Context**: C-level executives, IT directors, quality managers, and regulatory professionals planning AI strategies
-- **Critical Path**: Assessment → Risk Analysis → Implementation Planning → Documentation
-- **Key Moments**: Initial readiness assessment, risk evaluation, and strategic roadmap generation
+**Complexity Level**: Light Application (multiple features with basic state management)
+**Primary User Activity**: Interacting and Creating (assessment completion, roadmap generation)
 
 ## Essential Features
 
-### 1. Organizational Readiness Assessment
-- **What it does**: Multi-section assessment covering data governance, technical infrastructure, and regulatory maturity
-- **Why it matters**: Provides objective baseline for implementation planning
-- **Success criteria**: Clear readiness score with actionable improvement recommendations
+### Multi-Section Assessment Framework
+- **Functionality**: Structured questionnaire covering Data Governance, Regulatory Compliance, Technical Infrastructure, and Organizational Readiness
+- **Purpose**: Systematic evaluation of implementation readiness across critical domains
+- **Success Criteria**: All sections can be completed with persistent storage and real-time scoring
 
-### 2. Risk Assessment Matrix
-- **What it does**: Interactive FMEA-style risk evaluation for AI-specific failure modes
-- **Why it matters**: Enables proactive risk mitigation planning aligned with GxP requirements
-- **Success criteria**: Comprehensive risk registry with mitigation strategies
+### Real-time Scoring & Progress Tracking  
+- **Functionality**: Dynamic calculation of section and overall readiness scores with visual progress indicators
+- **Purpose**: Immediate feedback on assessment completion and readiness status
+- **Success Criteria**: Scores update automatically as users complete questions
 
-### 3. Implementation Roadmap Generator
-- **What it does**: Creates phased implementation plan based on assessment results
-- **Why it matters**: Provides structured approach to complex organizational transformation
-- **Success criteria**: Detailed, actionable roadmap with timelines and resources
+### Risk Assessment Matrix
+- **Functionality**: Interactive evaluation of AI-specific risks (hallucination, data leakage, bias, non-determinism) with organization-specific impact scoring
+- **Purpose**: Identify and prioritize risk mitigation strategies
+- **Success Criteria**: Users can assess each risk factor and document mitigation plans
 
-### 4. ROI Calculator
-- **What it does**: Quantifies financial impact across key GxP use cases
-- **Why it matters**: Enables data-driven investment decisions and business case development
-- **Success criteria**: Clear financial projections supporting investment justification
+### ROI Calculator
+- **Functionality**: Automated calculation of potential return on investment for common GxP use cases
+- **Purpose**: Quantify business value to support implementation decisions
+- **Success Criteria**: Calculations update based on organization's hourly rate and show annual value projections
+
+### Implementation Roadmap Generator
+- **Functionality**: Dynamic generation of phased implementation plan based on assessment results
+- **Purpose**: Provide actionable next steps tailored to organization's readiness level
+- **Success Criteria**: Roadmap adapts to show appropriate phases and activities
+
+### Data Export & Persistence
+- **Functionality**: Complete assessment results export and persistent storage across sessions
+- **Purpose**: Enable sharing of results and continuation of assessment over time
+- **Success Criteria**: All data persists between sessions and can be exported as structured JSON
 
 ## Design Direction
 
 ### Visual Tone & Identity
-- **Emotional Response**: Professional confidence and systematic thoroughness
-- **Design Personality**: Corporate, authoritative, and methodical - reflecting enterprise software expectations
-- **Visual Metaphors**: Assessment dashboards, progress indicators, and structured workflows
-- **Simplicity Spectrum**: Rich interface with clear information hierarchy to handle complex data
+**Emotional Response**: Professional confidence and structured methodology
+**Design Personality**: Serious, authoritative, enterprise-grade
+**Visual Metaphors**: Assessment checkmarks, progress indicators, organizational hierarchy
+**Simplicity Spectrum**: Rich interface with comprehensive information display
 
 ### Color Strategy
-- **Color Scheme Type**: Analogous blue-based palette with strategic accent colors
-- **Primary Color**: Deep professional blue (#1e40af) - conveying trust and stability
-- **Secondary Colors**: Lighter blues and grays for structure and organization
-- **Accent Color**: Orange (#f97316) for calls-to-action and important highlights
-- **Color Psychology**: Blue builds trust essential for enterprise tools, orange creates urgency for action items
-- **Foreground/Background Pairings**:
-  - Primary text (#1f2937) on light backgrounds (#f9fafb)
-  - White text (#ffffff) on dark blue backgrounds (#1e40af)
-  - Dark text (#374151) on card backgrounds (#ffffff)
+**Color Scheme Type**: Professional blue-based palette with supporting accent colors
+**Primary Color**: Deep blue (#4338ca) - trust and authority for enterprise tools
+**Secondary Colors**: Light blue-gray (#f1f5f9) - calm, professional backgrounds
+**Accent Color**: Orange (#ea580c) - action items and progress highlights  
+**Color Psychology**: Blue conveys trust and stability essential for regulatory environments
+**Foreground/Background Pairings**: 
+- White backgrounds with dark blue text (high contrast)
+- Blue primary with white text (strong contrast)
+- Orange accents with white text (attention-grabbing)
 
 ### Typography System
-- **Font Pairing Strategy**: Clean sans-serif for both headings and body to ensure professional readability
-- **Typographic Hierarchy**: Clear size relationships from large headings to detailed body text
-- **Font Personality**: Professional, authoritative, highly legible
-- **Which fonts**: Inter for its excellent readability and professional appearance
-- **Legibility Check**: Inter is specifically designed for screen reading and maintains clarity at all sizes
+**Font Pairing Strategy**: Single high-quality sans-serif for consistency
+**Primary Font**: Inter - modern, highly legible, professional
+**Typographic Hierarchy**: Clear size progression (3xl/2xl/xl/lg/base/sm/xs)
+**Typography Consistency**: Consistent heading styles, body text, and metadata text
 
-### Visual Hierarchy & Layout
-- **Attention Direction**: Step-by-step flow with clear progression indicators
-- **White Space Philosophy**: Generous spacing to reduce cognitive load and improve focus
-- **Grid System**: Consistent card-based layout with clear sections
-- **Responsive Approach**: Mobile-first design adapting to desktop environments
-- **Content Density**: Balanced information richness with visual clarity
-
-### UI Elements & Component Selection
-- **Component Usage**: Cards for assessments, Progress indicators for completion, Tabs for organization, Forms for data input
-- **Component States**: Clear hover and active states for all interactive elements
-- **Icon Selection**: Professional icons from Phosphor for consistency
-- **Spacing System**: Tailwind's spacing scale for consistency
-- **Mobile Adaptation**: Stacked layouts and touch-friendly controls
-
-### Accessibility & Readability
-- **Contrast Goal**: WCAG AA compliance minimum across all text and interactive elements
+### Component Selection & UI Elements
+**Primary Components**: Cards for content organization, Tabs for navigation, Progress bars for scoring
+**Form Elements**: Radio groups for assessment questions, inputs for organization data
+**Data Display**: Badges for status indicators, tables for structured information
+**Navigation**: Tab-based interface with clear section organization
 
 ## Implementation Considerations
-- **Scalability Needs**: Modular assessment sections that can be extended
-- **Testing Focus**: Validation of assessment logic and calculation accuracy
-- **Critical Questions**: How to balance comprehensiveness with usability in complex enterprise assessments
+
+### Technical Requirements
+- React-based SPA with persistent state management via useKV hooks
+- Responsive design for desktop and tablet usage
+- Real-time calculations and updates
+- JSON export functionality for data portability
+
+### Data Management
+- All user inputs persist across sessions using Spark KV storage
+- Assessment answers stored as nested objects by question ID
+- Organization information maintained separately
+- Risk assessments tracked per risk factor with likelihood/impact scores
+
+### Scalability Considerations
+- Modular assessment sections allow for easy expansion
+- Risk factors and ROI use cases defined as data structures for maintainability
+- Implementation roadmap generation adapts to different organizational profiles
+
+## Accessibility & Usability
+
+### Form Design
+- Clear question numbering and section organization
+- Radio button groups with descriptive labels
+- Visual feedback for completion status
+- Keyboard navigation support through standard HTML controls
+
+### Information Architecture  
+- Progressive disclosure through tabbed interface
+- Clear visual hierarchy with cards and spacing
+- Status indicators and progress tracking throughout
+- Export functionality for external use and sharing
+
+## Success Metrics
+
+### User Engagement
+- Assessment completion rate across all sections
+- Time spent in each assessment area
+- Export usage indicating value perception
+
+### Business Impact
+- Accuracy of ROI calculations based on realistic use cases
+- Actionability of generated roadmaps
+- Alignment with actual Microsoft Copilot implementation best practices

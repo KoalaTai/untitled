@@ -21,11 +21,11 @@ import {
   CheckCircle,
   Clock,
   Users,
-  Database,
   Gear,
   ChartLine,
   FileText,
-  Download
+  Download,
+  WarningCircle
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
@@ -256,13 +256,13 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false)
   
   // Initialize KV hooks with proper error handling
-  const [assessmentAnswers, setAssessmentAnswers] = useKV('assessment-answers', {})
-  const [organizationInfo, setOrganizationInfo] = useKV('organization-info', {
+  const [assessmentAnswers, setAssessmentAnswers, deleteAssessmentAnswers] = useKV('assessment-answers', {})
+  const [organizationInfo, setOrganizationInfo, deleteOrganizationInfo] = useKV('organization-info', {
     name: '',
     size: '',
     hourlyRate: 150
   })
-  const [riskAssessment, setRiskAssessment] = useKV('risk-assessment', {})
+  const [riskAssessment, setRiskAssessment, deleteRiskAssessment] = useKV('risk-assessment', {})
   const [selectedRisk, setSelectedRisk] = useState(null)
 
   // Ensure proper initialization
@@ -301,9 +301,35 @@ function App() {
   }
 
   const getReadinessLevel = (score) => {
-    if (score >= 80) return { level: 'High', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-    if (score >= 60) return { level: 'Medium', color: 'bg-yellow-100 text-yellow-800', icon: Clock }
-    return { level: 'Low', color: 'bg-red-100 text-red-800', icon: AlertTriangle }
+    if (score >= 80) return { level: 'High', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle }
+    if (score >= 60) return { level: 'Medium', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock }
+    return { level: 'Low', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertTriangle }
+  }
+
+  // Calculate risk score for a specific risk
+  const getRiskScore = (riskId) => {
+    const likelihood = riskAssessment?.[`${riskId}_likelihood`] || 0
+    const impact = riskAssessment?.[`${riskId}_impact`] || 0
+    return likelihood * impact
+  }
+
+  // Validate if organization setup is complete
+  const isOrganizationComplete = () => {
+    return organizationInfo?.name && organizationInfo?.size && organizationInfo?.hourlyRate
+  }
+
+  // Check if assessment has meaningful progress
+  const getAssessmentProgress = () => {
+    if (!assessmentAnswers) return { completed: 0, total: 0, percentage: 0 }
+    
+    const totalQuestions = Object.values(ASSESSMENT_SECTIONS).reduce((sum, section) => sum + section.questions.length, 0)
+    const answeredQuestions = Object.keys(assessmentAnswers).length
+    
+    return {
+      completed: answeredQuestions,
+      total: totalQuestions,
+      percentage: Math.round((answeredQuestions / totalQuestions) * 100)
+    }
   }
 
   const calculateROI = () => {
@@ -323,69 +349,160 @@ function App() {
 
   const generateImplementationPlan = () => {
     const overallScore = calculateOverallScore()
+    const progress = getAssessmentProgress()
     const phases = []
+
+    // Only generate meaningful roadmap if assessment has some progress
+    if (progress.percentage < 25) {
+      phases.push({
+        phase: 1,
+        title: 'Complete Assessment',
+        duration: '1-2 weeks',
+        activities: [
+          'Complete all assessment sections for accurate roadmap',
+          'Gather stakeholder input across IT, Quality, and Regulatory teams',
+          'Review organizational readiness with leadership',
+          'Identify key champions and early adopters'
+        ]
+      })
+      return phases
+    }
 
     // Phase 1: Always foundational
     phases.push({
       phase: 1,
-      title: 'Foundation & Pilot',
-      duration: '3 months',
+      title: 'Foundation & Governance',
+      duration: '2-3 months',
       activities: [
-        'Establish AI Council and governance framework',
-        'Complete data hygiene assessment and remediation',
-        'Implement Microsoft Purview controls',
-        'Launch pilot with audit preparation use case',
-        'Train initial AI Champions'
+        'Establish cross-functional AI Council with executive sponsorship',
+        'Complete comprehensive data hygiene assessment and remediation',
+        'Implement Microsoft Purview controls and sensitivity labels',
+        'Develop GxP-specific data governance policies',
+        'Create AI usage guidelines and acceptable use policies'
       ]
     })
 
-    // Phase 2: Based on readiness
-    if (overallScore >= 60) {
+    // Phase 2: Based on readiness and specific gaps
+    const sectionScores = Object.keys(ASSESSMENT_SECTIONS).reduce((acc, sectionId) => {
+      acc[sectionId] = calculateSectionScore(sectionId)
+      return acc
+    }, {})
+
+    const phase2Activities = []
+    
+    if (overallScore >= 70) {
+      // High readiness - can move to pilot quickly
       phases.push({
         phase: 2,
-        title: 'Targeted Deployment',
-        duration: '6 months',
+        title: 'Pilot Implementation',
+        duration: '3-4 months',
         activities: [
-          'Expand to Quality Assurance department',
-          'Implement deviation investigation workflow',
-          'Develop role-based training programs',
-          'Validate medium-risk use cases',
-          'Measure and report ROI metrics'
+          'Launch pilot with audit preparation use case (low risk)',
+          'Train initial cohort of 10-15 AI Champions',
+          'Implement Computer Software Assurance (CSA) validation framework',
+          'Deploy Microsoft Copilot to pilot group with full monitoring',
+          'Establish success metrics and KPI tracking',
+          'Document lessons learned and best practices'
         ]
       })
-    } else {
+    } else if (overallScore >= 50) {
+      // Medium readiness - need capability building
+      phase2Activities.push('Strengthen technical infrastructure and cloud governance')
+      
+      if (sectionScores.dataGovernance < 60) {
+        phase2Activities.push('Implement comprehensive data classification system')
+        phase2Activities.push('Deploy Data Loss Prevention (DLP) policies')
+      }
+      
+      if (sectionScores.regulatory < 60) {
+        phase2Activities.push('Train team on Computer Software Assurance (CSA) methodology')
+        phase2Activities.push('Develop GxP validation templates and procedures')
+      }
+      
+      if (sectionScores.organizational < 60) {
+        phase2Activities.push('Develop comprehensive change management program')
+        phase2Activities.push('Build AI literacy through organization-wide training')
+      }
+      
+      phase2Activities.push('Conduct limited pilot with low-risk administrative use cases')
+      
       phases.push({
         phase: 2,
-        title: 'Capability Building',
-        duration: '9 months',
+        title: 'Capability Development',
+        duration: '6-9 months',
+        activities: phase2Activities
+      })
+    } else {
+      // Low readiness - significant preparation needed
+      phases.push({
+        phase: 2,
+        title: 'Infrastructure & Capability Building',
+        duration: '9-12 months',
         activities: [
-          'Strengthen technical infrastructure',
-          'Enhance data governance practices',
-          'Build change management capabilities',
-          'Develop AI literacy training',
-          'Prepare for broader deployment'
+          'Upgrade Microsoft 365 infrastructure and security posture',
+          'Implement comprehensive identity and access management',
+          'Establish mature data governance practices',
+          'Build internal validation and compliance capabilities',
+          'Develop organizational change management expertise',
+          'Create foundational AI training and awareness programs',
+          'Establish vendor management processes for AI technologies'
         ]
       })
     }
 
-    // Phase 3: Enterprise scale
-    phases.push({
-      phase: 3,
-      title: 'Enterprise Scale',
-      duration: '12+ months',
-      activities: [
-        'Enterprise-wide rollout across all departments',
-        'Advanced use case implementation',
-        'Continuous improvement and optimization',
-        'Regular compliance assessments',
-        'Innovation and new use case development'
+    // Phase 3: Expansion (only if readiness is sufficient)
+    if (overallScore >= 50) {
+      const phase3Activities = [
+        'Expand deployment to Quality Assurance and Regulatory Affairs',
+        'Implement medium-risk use cases (deviation investigation, CAPA support)',
+        'Develop role-specific training programs and competency assessments',
+        'Establish continuous monitoring and audit processes'
       ]
-    })
+
+      if (overallScore >= 70) {
+        phase3Activities.push('Scale to additional departments based on business value')
+        phase3Activities.push('Implement advanced use cases with higher risk profiles')
+      }
+
+      phases.push({
+        phase: 3,
+        title: 'Controlled Expansion',
+        duration: overallScore >= 70 ? '6-9 months' : '12-18 months',
+        activities: phase3Activities
+      })
+    }
+
+    // Phase 4: Enterprise scale (only for high-readiness organizations)
+    if (overallScore >= 70) {
+      phases.push({
+        phase: 4,
+        title: 'Enterprise Optimization',
+        duration: 'Ongoing',
+        activities: [
+          'Enterprise-wide rollout with role-based access controls',
+          'Advanced analytics and usage optimization',
+          'Continuous improvement based on user feedback and metrics',
+          'Regular compliance assessments and audit readiness',
+          'Innovation pipeline for new AI use cases and technologies'
+        ]
+      })
+    }
 
     return phases
   }
 
   const exportResults = () => {
+    if (!isOrganizationComplete()) {
+      toast.error('Please complete organization setup before exporting.')
+      return
+    }
+
+    const progress = getAssessmentProgress()
+    if (progress.percentage < 50) {
+      toast.error('Please complete at least 50% of the assessment before exporting.')
+      return
+    }
+
     const results = {
       organizationInfo: organizationInfo || {},
       assessmentScores: Object.keys(ASSESSMENT_SECTIONS).reduce((acc, sectionId) => {
@@ -393,6 +510,7 @@ function App() {
         return acc
       }, {}),
       overallScore: calculateOverallScore(),
+      assessmentProgress: progress,
       riskAssessment: riskAssessment || {},
       roiCalculation: calculateROI(),
       implementationPlan: generateImplementationPlan(),
@@ -405,13 +523,24 @@ function App() {
     
     const link = document.createElement('a')
     link.href = url
-    link.download = `copilot-assessment-${organizationInfo?.name || 'organization'}-${new Date().toISOString().split('T')[0]}.json`
+    link.download = `copilot-assessment-${organizationInfo?.name?.replace(/[^a-z0-9]/gi, '-') || 'organization'}-${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
     
     toast.success('Assessment results exported successfully!')
+  }
+
+  const resetAssessment = () => {
+    if (window.confirm('Are you sure you want to reset all assessment data? This action cannot be undone.')) {
+      deleteAssessmentAnswers()
+      deleteOrganizationInfo()
+      deleteRiskAssessment()
+      setSelectedRisk(null)
+      setCurrentTab('setup')
+      toast.success('Assessment data has been reset.')
+    }
   }
 
   const AssessmentSection = ({ sectionId, section }) => {
@@ -473,12 +602,22 @@ function App() {
             <div className="p-2 bg-primary-foreground/10 rounded-lg">
               <Target size={32} className="text-primary-foreground" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-3xl font-bold">AI Copilot Implementation Assessment</h1>
               <p className="text-primary-foreground/80 mt-1">
                 Strategic framework for Microsoft Copilot in GxP-regulated environments
               </p>
             </div>
+            {getAssessmentProgress().percentage > 0 && (
+              <div className="bg-primary-foreground/10 rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary-foreground">
+                    {getAssessmentProgress().percentage}%
+                  </div>
+                  <p className="text-xs text-primary-foreground/80">Complete</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -490,14 +629,21 @@ function App() {
             <TabsTrigger value="setup" className="flex items-center gap-2">
               <Users size={16} />
               Setup
+              {isOrganizationComplete() && <CheckCircle size={12} className="text-green-600" />}
             </TabsTrigger>
             <TabsTrigger value="assessment" className="flex items-center gap-2">
               <ClipboardText size={16} />
               Assessment
+              {getAssessmentProgress().percentage > 0 && (
+                <Badge variant="secondary" className="text-xs ml-1">
+                  {getAssessmentProgress().percentage}%
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="risks" className="flex items-center gap-2">
               <AlertTriangle size={16} />
               Risk Analysis
+              {Object.keys(riskAssessment || {}).length > 0 && <CheckCircle size={12} className="text-green-600" />}
             </TabsTrigger>
             <TabsTrigger value="roi" className="flex items-center gap-2">
               <TrendUp size={16} />
@@ -547,6 +693,8 @@ function App() {
                   <Input
                     id="hourly-rate"
                     type="number"
+                    min="50"
+                    max="500"
                     placeholder="150"
                     value={organizationInfo?.hourlyRate || 150}
                     onChange={(e) => setOrganizationInfo(prev => ({ ...(prev || {}), hourlyRate: parseInt(e.target.value) || 150 }))}
@@ -555,9 +703,30 @@ function App() {
                     Used for ROI calculations. Include salary, benefits, and overhead costs.
                   </p>
                 </div>
-                <Button onClick={() => setCurrentTab('assessment')} className="w-full">
-                  Continue to Assessment
-                </Button>
+                
+                {!isOrganizationComplete() && (
+                  <Alert>
+                    <AlertTriangle size={16} />
+                    <AlertDescription>
+                      Please complete all fields above to continue with the assessment.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={() => setCurrentTab('assessment')} 
+                    className="flex-1"
+                    disabled={!isOrganizationComplete()}
+                  >
+                    Continue to Assessment
+                  </Button>
+                  {(organizationInfo?.name || assessmentAnswers && Object.keys(assessmentAnswers).length > 0) && (
+                    <Button onClick={resetAssessment} variant="outline" className="text-destructive">
+                      Reset All Data
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -616,16 +785,24 @@ function App() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {RISK_FACTORS.map(risk => (
-                        <Button
-                          key={risk.id}
-                          variant={selectedRisk?.id === risk.id ? "default" : "outline"}
-                          className="w-full justify-start"
-                          onClick={() => setSelectedRisk(risk)}
-                        >
-                          {risk.name}
-                        </Button>
-                      ))}
+                      {RISK_FACTORS.map(risk => {
+                        const riskScore = getRiskScore(risk.id)
+                        const riskLevel = getRiskLevel(riskScore)
+                        return (
+                          <div key={risk.id} className="flex items-center gap-2">
+                            <Button
+                              variant={selectedRisk?.id === risk.id ? "default" : "outline"}
+                              className="flex-1 justify-start"
+                              onClick={() => setSelectedRisk(risk)}
+                            >
+                              {risk.name}
+                            </Button>
+                            <Badge className={`${riskLevel.color} text-xs`}>
+                              {riskLevel.level}
+                            </Badge>
+                          </div>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -661,8 +838,15 @@ function App() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Risk Assessment for Your Organization</Label>
-                        <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label>Risk Assessment for Your Organization</Label>
+                          {getRiskScore(selectedRisk.id) > 0 && (
+                            <Badge className={getRiskLevel(getRiskScore(selectedRisk.id)).color}>
+                              {getRiskLevel(getRiskScore(selectedRisk.id)).level} Risk (Score: {getRiskScore(selectedRisk.id)})
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <Label className="text-xs">Likelihood (1-5)</Label>
                             <Input
@@ -675,6 +859,9 @@ function App() {
                                 [`${selectedRisk.id}_likelihood`]: parseInt(e.target.value) || 1
                               }))}
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              How likely is this risk to occur?
+                            </p>
                           </div>
                           <div>
                             <Label className="text-xs">Impact (1-5)</Label>
@@ -688,18 +875,22 @@ function App() {
                                 [`${selectedRisk.id}_impact`]: parseInt(e.target.value) || 1
                               }))}
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              How severe would the impact be?
+                            </p>
                           </div>
-                          <div>
-                            <Label className="text-xs">Mitigation Notes</Label>
-                            <Textarea
-                              placeholder="Specific mitigation strategies for your organization..."
-                              value={riskAssessment?.[`${selectedRisk.id}_notes`] || ''}
-                              onChange={(e) => setRiskAssessment(prev => ({
-                                ...(prev || {}),
-                                [`${selectedRisk.id}_notes`]: e.target.value
-                              }))}
-                            />
-                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Mitigation Notes</Label>
+                          <Textarea
+                            placeholder="Specific mitigation strategies for your organization..."
+                            value={riskAssessment?.[`${selectedRisk.id}_notes`] || ''}
+                            onChange={(e) => setRiskAssessment(prev => ({
+                              ...(prev || {}),
+                              [`${selectedRisk.id}_notes`]: e.target.value
+                            }))}
+                            rows={3}
+                          />
                         </div>
                       </div>
                     </CardContent>
@@ -789,14 +980,50 @@ function App() {
           {/* Roadmap Tab */}
           <TabsContent value="roadmap">
             <div className="space-y-6">
-              <Card>
+              {/* Summary Card */}
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ChartLine size={20} />
-                    Implementation Roadmap
+                    Implementation Summary
                   </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {calculateOverallScore()}%
+                      </div>
+                      <p className="text-sm text-muted-foreground">Overall Readiness</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        ${calculateROI().reduce((sum, useCase) => sum + useCase.annualValue, 0).toLocaleString()}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Annual ROI</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {getAssessmentProgress().percentage}%
+                      </div>
+                      <p className="text-sm text-muted-foreground">Assessment Complete</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {generateImplementationPlan().length}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Implementation Phases</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Roadmap Phases */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Strategic Implementation Roadmap</CardTitle>
                   <CardDescription>
-                    Strategic phased approach based on your assessment results
+                    Phased approach tailored to your organization's readiness level
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -831,7 +1058,9 @@ function App() {
                 <AlertTriangle size={16} />
                 <AlertDescription>
                   <strong>Important:</strong> This roadmap is based on your assessment responses. 
-                  Consider engaging with Microsoft partners or consultants for detailed implementation planning.
+                  {getAssessmentProgress().percentage < 80 && 
+                    ' Complete more assessment questions for a more detailed roadmap.'
+                  } Consider engaging with Microsoft partners or consultants for detailed implementation planning.
                 </AlertDescription>
               </Alert>
 
