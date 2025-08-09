@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -252,7 +252,10 @@ const ROI_USE_CASES = [
 ]
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('assessment')
+  const [currentTab, setCurrentTab] = useState('setup')
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Initialize KV hooks with proper error handling
   const [assessmentAnswers, setAssessmentAnswers] = useKV('assessment-answers', {})
   const [organizationInfo, setOrganizationInfo] = useKV('organization-info', {
     name: '',
@@ -262,9 +265,28 @@ function App() {
   const [riskAssessment, setRiskAssessment] = useKV('risk-assessment', {})
   const [selectedRisk, setSelectedRisk] = useState(null)
 
-  // Calculate assessment scores
+  // Ensure proper initialization
+  useEffect(() => {
+    setIsInitialized(true)
+  }, [])
+
+  // Don't render until initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading assessment tool...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Calculate assessment scores with null checks
   const calculateSectionScore = (sectionId) => {
     const section = ASSESSMENT_SECTIONS[sectionId]
+    if (!section || !assessmentAnswers) return 0
+    
     const answers = section.questions.map(q => assessmentAnswers[q.id] || 0)
     const total = answers.reduce((sum, score) => sum + score, 0)
     const maxPossible = section.questions.length * 4
@@ -272,6 +294,8 @@ function App() {
   }
 
   const calculateOverallScore = () => {
+    if (!assessmentAnswers) return 0
+    
     const sectionScores = Object.keys(ASSESSMENT_SECTIONS).map(calculateSectionScore)
     return Math.round(sectionScores.reduce((sum, score) => sum + score, 0) / sectionScores.length)
   }
@@ -283,7 +307,9 @@ function App() {
   }
 
   const calculateROI = () => {
-    const { hourlyRate } = organizationInfo
+    if (!organizationInfo) return []
+    
+    const { hourlyRate = 150 } = organizationInfo
     return ROI_USE_CASES.map(useCase => {
       const timeSaved = (useCase.baselineHours * useCase.improvementPercent / 100)
       const annualValue = timeSaved * hourlyRate * 52 // Assuming weekly occurrence
@@ -361,13 +387,13 @@ function App() {
 
   const exportResults = () => {
     const results = {
-      organizationInfo,
+      organizationInfo: organizationInfo || {},
       assessmentScores: Object.keys(ASSESSMENT_SECTIONS).reduce((acc, sectionId) => {
         acc[sectionId] = calculateSectionScore(sectionId)
         return acc
       }, {}),
       overallScore: calculateOverallScore(),
-      riskAssessment,
+      riskAssessment: riskAssessment || {},
       roiCalculation: calculateROI(),
       implementationPlan: generateImplementationPlan(),
       generatedAt: new Date().toISOString()
@@ -379,7 +405,7 @@ function App() {
     
     const link = document.createElement('a')
     link.href = url
-    link.download = `copilot-assessment-${organizationInfo.name || 'organization'}-${new Date().toISOString().split('T')[0]}.json`
+    link.download = `copilot-assessment-${organizationInfo?.name || 'organization'}-${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -414,10 +440,10 @@ function App() {
                 {index + 1}. {question.question}
               </Label>
               <RadioGroup
-                value={assessmentAnswers[question.id]?.toString() || ''}
+                value={assessmentAnswers?.[question.id]?.toString() || ''}
                 onValueChange={(value) => {
                   setAssessmentAnswers(prev => ({
-                    ...prev,
+                    ...(prev || {}),
                     [question.id]: parseInt(value)
                   }))
                 }}
@@ -502,8 +528,8 @@ function App() {
                     <Input
                       id="org-name"
                       placeholder="e.g., Acme Life Sciences"
-                      value={organizationInfo.name}
-                      onChange={(e) => setOrganizationInfo(prev => ({ ...prev, name: e.target.value }))}
+                      value={organizationInfo?.name || ''}
+                      onChange={(e) => setOrganizationInfo(prev => ({ ...(prev || {}), name: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -511,8 +537,8 @@ function App() {
                     <Input
                       id="org-size"
                       placeholder="e.g., 500-1000 employees"
-                      value={organizationInfo.size}
-                      onChange={(e) => setOrganizationInfo(prev => ({ ...prev, size: e.target.value }))}
+                      value={organizationInfo?.size || ''}
+                      onChange={(e) => setOrganizationInfo(prev => ({ ...(prev || {}), size: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -522,8 +548,8 @@ function App() {
                     id="hourly-rate"
                     type="number"
                     placeholder="150"
-                    value={organizationInfo.hourlyRate}
-                    onChange={(e) => setOrganizationInfo(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 150 }))}
+                    value={organizationInfo?.hourlyRate || 150}
+                    onChange={(e) => setOrganizationInfo(prev => ({ ...(prev || {}), hourlyRate: parseInt(e.target.value) || 150 }))}
                   />
                   <p className="text-sm text-muted-foreground">
                     Used for ROI calculations. Include salary, benefits, and overhead costs.
@@ -643,9 +669,9 @@ function App() {
                               type="number"
                               min="1"
                               max="5"
-                              value={riskAssessment[`${selectedRisk.id}_likelihood`] || ''}
+                              value={riskAssessment?.[`${selectedRisk.id}_likelihood`] || ''}
                               onChange={(e) => setRiskAssessment(prev => ({
-                                ...prev,
+                                ...(prev || {}),
                                 [`${selectedRisk.id}_likelihood`]: parseInt(e.target.value) || 1
                               }))}
                             />
@@ -656,9 +682,9 @@ function App() {
                               type="number"
                               min="1"
                               max="5"
-                              value={riskAssessment[`${selectedRisk.id}_impact`] || ''}
+                              value={riskAssessment?.[`${selectedRisk.id}_impact`] || ''}
                               onChange={(e) => setRiskAssessment(prev => ({
-                                ...prev,
+                                ...(prev || {}),
                                 [`${selectedRisk.id}_impact`]: parseInt(e.target.value) || 1
                               }))}
                             />
@@ -667,9 +693,9 @@ function App() {
                             <Label className="text-xs">Mitigation Notes</Label>
                             <Textarea
                               placeholder="Specific mitigation strategies for your organization..."
-                              value={riskAssessment[`${selectedRisk.id}_notes`] || ''}
+                              value={riskAssessment?.[`${selectedRisk.id}_notes`] || ''}
                               onChange={(e) => setRiskAssessment(prev => ({
-                                ...prev,
+                                ...(prev || {}),
                                 [`${selectedRisk.id}_notes`]: e.target.value
                               }))}
                             />
@@ -746,7 +772,7 @@ function App() {
                         </div>
                         <p className="text-lg font-medium">Total Estimated Annual Value</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Based on {organizationInfo.hourlyRate ? `$${organizationInfo.hourlyRate}` : '$150'}/hour fully-burdened rate
+                          Based on {organizationInfo?.hourlyRate ? `$${organizationInfo.hourlyRate}` : '$150'}/hour fully-burdened rate
                         </p>
                       </div>
                     </CardContent>
